@@ -1,0 +1,17 @@
+[project]
+name = "sheet-engine"
+version = "0.1.0"
+description = "Spread Sheet Engine"
+readme = "README.md"
+authors = [
+    { name = "SeanGunn-ter", email = "smg7277@psu.edu" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "pytest>=8.3.5",
+    "ruff>=0.11.11",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
