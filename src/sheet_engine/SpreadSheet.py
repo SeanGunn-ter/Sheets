@@ -1,12 +1,14 @@
 import re
-from Expression import Expression
+from .Expression import Expression
 
 
 class Spreadsheet:
     def __init__(self, size: tuple):  # (col,row)
         self.cells = {}  # stores expr
         self.values = {}
-        self.deps = {}  # dependencys dict- if key changes value, all items in set its holding must change
+        self.deps = (
+            {}
+        )  # dependencys dict- if key changes value, all items in set its holding must change
         self.size = size  # tuple (column,row)
         self.evaluate_count = 0
 

@@ -1,5 +1,5 @@
 import pytest
-from SpreadSheet import Spreadsheet
+from sheet_engine.SpreadSheet import Spreadsheet
 
 
 def test_constant_value():

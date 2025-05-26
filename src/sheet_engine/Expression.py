@@ -1,5 +1,5 @@
 import re
-import infix_calc
+from . import infix_calc
 from enum import Enum, auto
 
 
