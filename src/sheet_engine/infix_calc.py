@@ -17,14 +17,19 @@ def split(expr: str) -> list:
     return re.findall(r"\d+|[A-Z]+\d+:[A-Z]+\d+|[A-Z]+\d+|[()+\-*/^]", expr)
 
 
+def split_deps(expr: str) -> list:
+    return re.findall(r"[A-Z]+\d+", expr)
+
+
 def infix_postfix(split_expr: list) -> list:
     postfix = []
     stack = []
     op_dict = {"+": 1, "-": 1, "*": 2, "/": 2, "^": 3}
     for item in split_expr:
         # find stand alone nums or cells
-        if isinstance(item, int):
-            postfix.append(item)
+        if re.fullmatch(r"\d+", item):
+            postfix.append(int(item))
+
         elif item in op_dict:
             # While there's an op on the stack with greater or equal value,
             # pop it from the stack and add to the output

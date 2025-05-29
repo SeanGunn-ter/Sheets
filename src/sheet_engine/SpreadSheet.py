@@ -1,10 +1,11 @@
 import re
 from .Expression import Expression
+from . import infix_calc
 
 
 class Spreadsheet:
     def __init__(self, size: tuple):  # (col,row)
-        self.cells = {}  # stores expr
+        self.cells = {}  # stores expr obj
         self.values = {}
         self.deps = (
             {}
@@ -37,16 +38,22 @@ class Spreadsheet:
                 self.cells[letters + str(row + 1)] = expr
 
     def set_cell(self, name: str, expr: str) -> None:
-        self.cells[name] = Expression(expr, self)
         self.clear_dependent_values(name)
+
         self.update_deps(name, expr)
+
+        value_dict = self.generate_values(expr)
+
+        self.cells[name] = Expression(expr, value_dict)
 
     def get_cell_expr(self, name: str) -> str:
         return self.cells[name]
 
-    def get_cell_value(self, name: str, visited=None) -> int | float:
-        if visited is None:
-            visited = set()
+    def get_cell_value(self, name: str) -> int | float:
+
+        expr = self.cells[name].expr
+        value_dict = self.generate_values(expr)
+        self.cells[name] = Expression(expr, value_dict)
 
         if name in self.values:
             return self.values[name]
@@ -57,7 +64,7 @@ class Spreadsheet:
             self.values[name] = 0
             return 0
 
-        value = expr_obj.evaluate(visited)
+        value = expr_obj.evaluate()
         self.values[name] = value
         return value
 
@@ -77,6 +84,37 @@ class Spreadsheet:
                 if dep in self.deps:
                     self.deps[dep].add(name)
                 else:
-                    new_set = set()
-                    new_set.add(name)
-                    self.deps[dep] = new_set
+                    self.deps[dep] = {name}
+                if self.has_cycle(dep, name):
+                    raise ValueError("Circular dependency detected")
+            # print(self.deps[dep], dep)
+
+    def has_cycle(self, dep, name):
+        if dep == name:
+            return True
+        for child in self.deps.get(dep, set()):
+            if self.has_cycle(child, dep):
+                return True
+        return False
+
+    def generate_values(self, expr):
+        dict = {}
+        split = infix_calc.split_deps(expr)
+        for cell in split:
+            # maybe change to int later
+            dict[cell] = str(self.get_cell_value(cell))
+        return dict
+
+
+# if __name__ == "__main__":
+#     sheet = Spreadsheet((10, 10))
+#     sheet.set_cell("A1", "10")
+#     sheet.set_cell("B1", "=A1+5")
+#     sheet.set_cell("C1", "15")
+
+#     print(sheet.get_cell_value("B1"))
+#     sheet.set_cell("A1", "0")
+#     print(sheet.get_cell_value("B1"))
+
+# spreadsheet.update_deps("A1", "=A2+A3")
+# python -m src.sheet_engine.SpreadSheet

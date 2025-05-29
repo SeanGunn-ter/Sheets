@@ -44,19 +44,18 @@ def test_pemdas():
     assert sheet.get_cell_value("E1") == 1
 
 
+# figure out
 def test_circular_reference_detection():
     sheet = Spreadsheet((10, 10))
     sheet.set_cell("A1", "=B1")
-    sheet.set_cell("B1", "=A1")
     with pytest.raises(ValueError, match="Circular dependency detected"):
-        sheet.get_cell_value("B1")
+        sheet.set_cell("B1", "=A1")
 
     sheet2 = Spreadsheet((10, 10))
     sheet2.set_cell("A1", "5")
     sheet2.set_cell("B1", "=A1+5")
-    sheet2.set_cell("A1", "=B1")
     with pytest.raises(ValueError, match="Circular dependency detected"):
-        sheet.get_cell_value("B1")
+        sheet2.set_cell("A1", "=B1")
 
 
 def test_intensive_dependencies():
@@ -151,3 +150,6 @@ def test_larger_diamond_dependency():
     sheet.set_cell("C1", sum_expr)
     assert sheet.get_cell_value("C1") == 5150
     assert sheet.evaluate_count == 1 + 1 + 100
+
+
+# python -m pytest tests/test_spreadsheet.py
