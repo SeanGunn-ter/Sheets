@@ -44,7 +44,6 @@ def test_pemdas():
     assert sheet.get_cell_value("E1") == 1
 
 
-# figure out
 def test_circular_reference_detection():
     sheet = Spreadsheet((10, 10))
     sheet.set_cell("A1", "=B1")

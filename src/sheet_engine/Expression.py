@@ -10,12 +10,11 @@ class ExpressionType(Enum):
 
 
 class Expression:
-    def __init__(self, expr, value_dict):
-        self.expr = expr  # =A1+A2
-        self.expr_type = self.determine_type()
-        self.deps = value_dict
+    def __init__(self, expr):
+        self.expr = expr
+        self.expr_type = self._determine_type()
 
-    def determine_type(self):
+    def _determine_type(self):
         expr = self.expr
         if expr.startswith("="):
             return ExpressionType.FORMULA
@@ -24,7 +23,7 @@ class Expression:
         else:
             return ExpressionType.LITERAL
 
-    def evaluate(self):
+    def evaluate(self, value_dict):
         expr = self.expr
         if self.expr_type == ExpressionType.FORMULA:
             if not infix_calc.has_balanced_parentheses(expr[1:]):
@@ -32,37 +31,27 @@ class Expression:
 
             split_expr = infix_calc.split(expr[1:])
 
-            split_expr = self.replace_vals(split_expr)
+            split_expr = self._replace_vals(split_expr, value_dict)
 
             postfix_expr = infix_calc.infix_postfix(split_expr)
 
-            value = self.postfix_eval(postfix_expr)
+            value = infix_calc.postfix_eval(postfix_expr)
             return value
         if self.expr_type == ExpressionType.INTEGER:
-            return int(self.expr)
+            return int(expr)
 
-    def replace_vals(self, split_expr):
+    def _replace_vals(self, split_expr, value_dict):
         for i, cell in enumerate(split_expr):
+            if re.fullmatch(r"\d+", cell):
+                split_expr[i] = int(cell)
             if re.fullmatch(r"[A-Z]+\d+", cell):
-                split_expr[i] = self.deps[cell]
+                if cell not in value_dict:
+                    raise ValueError(f"Cell {cell} not found in value dict")
+                else:
+                    split_expr[i] = value_dict[cell]
         return split_expr
 
-    def postfix_eval(self, postfix: list) -> int:
-        stack = []
-        for item in postfix:
-            if isinstance(item, int):
-                stack.append(item)
-            else:
-                b = stack.pop()  # whats pushed first is second operand
-                a = stack.pop()
-                if item == "+":
-                    stack.append(a + b)
-                elif item == "-":
-                    stack.append(a - b)
-                elif item == "*":
-                    stack.append(a * b)
-                elif item == "/":
-                    stack.append(a / b)
-                elif item == "^":
-                    stack.append(pow(a, b))
-        return stack[0]
+    def get_dependencies(self) -> set:
+        if self.expr_type != ExpressionType.FORMULA:
+            return set()
+        return set(re.findall(r"[A-Z]+\d+", self.expr))

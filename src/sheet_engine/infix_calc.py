@@ -22,13 +22,14 @@ def split_deps(expr: str) -> list:
 
 
 def infix_postfix(split_expr: list) -> list:
+
     postfix = []
     stack = []
     op_dict = {"+": 1, "-": 1, "*": 2, "/": 2, "^": 3}
     for item in split_expr:
         # find stand alone nums or cells
-        if re.fullmatch(r"\d+", item):
-            postfix.append(int(item))
+        if isinstance(item, int):
+            postfix.append(item)
 
         elif item in op_dict:
             # While there's an op on the stack with greater or equal value,
@@ -50,6 +51,27 @@ def infix_postfix(split_expr: list) -> list:
         postfix.append(stack.pop())  # append remaining operators in correct order
 
     return postfix
+
+
+def postfix_eval(postfix: list) -> int:
+    stack = []
+    for item in postfix:
+        if isinstance(item, int):
+            stack.append(item)
+        else:
+            b = stack.pop()  # whats pushed first is second operand
+            a = stack.pop()
+            if item == "+":
+                stack.append(a + b)
+            elif item == "-":
+                stack.append(a - b)
+            elif item == "*":
+                stack.append(a * b)
+            elif item == "/":
+                stack.append(a / b)
+            elif item == "^":
+                stack.append(pow(a, b))
+    return stack[0]
 
 
 # split_expr = ["3", "+", "4", "*", "2", "/", "(", "1", "-", "5", ")"]
