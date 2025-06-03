@@ -1,8 +1,6 @@
 import re
 from .Expression import Expression, ExpressionType
 
-from . import infix_calc
-
 
 class Spreadsheet:
     def __init__(self, size: tuple):  # (col,row)
@@ -12,7 +10,6 @@ class Spreadsheet:
         self.rev_deps = {}
         self.deps = {}
         self.size = size  # tuple (column,row)
-        self.evaluate_count = 0
 
     def _set_sheet(self, expr: str) -> None:
         # currently supports 702 columns
@@ -42,8 +39,8 @@ class Spreadsheet:
         self._clear_dependent_values(name)
 
         self._update_deps(name, expr)
-
-        self.cells[name] = expr
+        expr_obj = Expression(expr)
+        self.cells[name] = expr_obj
 
     def get_cell_expr(self, name: str) -> str:
         return self.cells[name]
@@ -56,7 +53,6 @@ class Spreadsheet:
         expr = self.cells[name]
         value_dict = self._generate_values(expr)
 
-        expr = Expression(expr)
         value = expr.evaluate(value_dict)
 
         self.values[name] = value
@@ -97,14 +93,12 @@ class Spreadsheet:
                 return True
         return False
 
-    def _generate_values(self, expr):
-        # creates a value dict
-        dict = {}
-        split = infix_calc.split_deps(expr)
-        for cell in split:
-            # maybe change to int later
-            dict[cell] = self.get_cell_value(cell)
-        return dict
+    def _generate_values(self, expr_obj):
+        dependencies = expr_obj.get_dependencies()
+        value_dict = {}
+        for cell in dependencies:
+            value_dict[cell] = self.get_cell_value(cell)
+        return value_dict
 
 
 if __name__ == "__main__":
