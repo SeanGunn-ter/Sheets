@@ -115,7 +115,7 @@ def test_diamond_dependency():
     sheet.set_cell("D1", "=B1+C1")
 
     assert sheet.get_cell_value("D1") == 5
-    # assert sheet.evaluate_count == 4
+    assert sheet.evaluation_count == 4
 
 
 def test_larger_diamond_dependency():
@@ -134,10 +134,9 @@ def test_larger_diamond_dependency():
 
     assert sheet.get_cell_value("D1") == 35
     # this is working as intended, A1: evaluated once, B1-B5: evaluated 5 times, C1-C5: evaluated 5 times, D1:evaluted once
-    # assert sheet.evaluate_count == 12
+    assert sheet.evaluation_count == 12
 
     sheet = Spreadsheet((200, 200))
-    sheet.evaluate_count = 0
     width = 100
 
     sheet.set_cell("A1", "1")
@@ -148,7 +147,55 @@ def test_larger_diamond_dependency():
     sum_expr = "=" + "+".join([f"B{i}" for i in range(1, width + 1)])
     sheet.set_cell("C1", sum_expr)
     assert sheet.get_cell_value("C1") == 5150
-    # assert sheet.evaluate_count == 1 + 1 + 100
+    assert sheet.evaluation_count == 1 + 1 + 100
+
+
+# def name_generator():
+#     col = 0
+#     row = 1
+#     while True:
+#         n = col
+#         name = ""
+#         while True:
+#             name = chr(n % 26 + 65) + name  # 65 = A asci
+#             # shift range done by one, n=26:"A", 26//26==1-1=0
+#             n = n // 26 - 1
+
+#             if n < 0:
+#                 break
+
+#         yield f"{name}{row}"
+#         row += 1
+
+
+# def build_tree(sheet: Spreadsheet, name_gen: function, depth: int, leaf_names: list):
+#     name = next(name_gen)
+#     if depth == 0:
+#         sheet.set_cell(name, "1")
+#         leaf_names.append(name)  # track this leaf
+#         return name
+
+#     left = build_tree(sheet, name_gen, depth - 1, leaf_names)
+#     right = build_tree(sheet, name_gen, depth - 1, leaf_names)
+#     sheet.set_cell(name, f"={left}+{right}")
+#     return name
+
+
+# def test_binary_tree_depth_3():
+#     sheet = Spreadsheet((50, 50))
+#     gen = name_generator()
+#     leaf_names = []
+#     root = build_tree(sheet, gen, depth=3, leaf_names=leaf_names)
+
+#     assert sheet.get_cell_value(root) == 8  # 8 leaves
+#     assert sheet.evaluation_count == 15
+
+#     leaf_to_update = leaf_names[0]  # first leaf
+#     sheet.set_cell(leaf_to_update, "10")
+
+#     sheet.evaluation_count = 0
+#     assert sheet.get_cell_value(root) == 17
+#     assert sheet.evaluation_count == 4  # updated leaf + 3 dependents
 
 
 # python -m pytest tests/test_spreadsheet.py

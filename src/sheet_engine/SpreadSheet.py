@@ -1,4 +1,3 @@
-import re
 from .Expression import Expression, ExpressionType
 
 
@@ -10,30 +9,7 @@ class Spreadsheet:
         self.rev_deps = {}
         self.deps = {}
         self.size = size  # tuple (column,row)
-
-    def _set_sheet(self, expr: str) -> None:
-        # currently supports 702 columns
-        cols, rows = self.size
-        first_letter = ""
-        second_letter = ""
-        x = 0
-        loops = 0
-
-        for col in range(cols):
-            if x == 0:
-                first_letter = chr(col % 26 + 65 + loops)
-
-            if col >= 26:  # passed Z
-                second_letter = chr(65 + x)  # restart at A
-                x += 1
-                if x >= 26:
-                    x = 0  # restart second letter to A again
-                    loops += 1  # incriment first letter by 1
-
-            letters = first_letter + second_letter
-
-            for row in range(rows):
-                self.cells[letters + str(row + 1)] = expr
+        self.evaluation_count = 0  # for testing
 
     def set_cell(self, name: str, expr: str) -> None:
         self._clear_dependent_values(name)
@@ -50,6 +26,7 @@ class Spreadsheet:
         if name in self.values:
             return self.values[name]
 
+        self.evaluation_count += 1
         expr = self.cells[name]
         value_dict = self._generate_values(expr)
 
@@ -58,7 +35,7 @@ class Spreadsheet:
         self.values[name] = value
         return value
 
-    def _clear_dependent_values(self, name):
+    def _clear_dependent_values(self, name: str) -> None:
         if name in self.values:
             self.values.pop(name)
         # recursively remove all values dependent
@@ -81,7 +58,7 @@ class Spreadsheet:
                 else:
                     self.rev_deps[dep] = {name}
 
-    def _has_cycle(self, start, current, visited):
+    def _has_cycle(self, start: str, current: str, visited: set) -> bool:
         if current in visited:
             return False
         visited.add(current)
@@ -93,7 +70,7 @@ class Spreadsheet:
                 return True
         return False
 
-    def _generate_values(self, expr_obj):
+    def _generate_values(self, expr_obj: Expression) -> dict:
         dependencies = expr_obj.get_dependencies()
         value_dict = {}
         for cell in dependencies:
