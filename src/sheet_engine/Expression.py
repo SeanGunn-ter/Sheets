@@ -1,6 +1,6 @@
 import re
 from enum import Enum, auto
-from .expr_types import Expr, LiteralInt, CellId, Plus, Minus, Multiply, Divide
+from .expr_types import Expr, LiteralInt, CellId, Plus, Minus, Multiply, Divide, Sum
 
 
 class ExpressionType(Enum):
@@ -80,7 +80,22 @@ def precedence(op):
 
 
 def to_expr(op, left, right):
-    return {"+": Plus, "-": Minus, "*": Multiply, "/": Divide}[op](left, right)
+    if op == "+":
+        parts = []
+
+        def collect_terms(expr):
+            if isinstance(expr, Sum):
+                for e in expr.expr_lst:
+                    parts.append(e)
+            else:
+                parts.append(expr)
+
+        collect_terms(left)
+        collect_terms(right)
+
+        return Sum(parts)
+
+    return {"-": Minus, "*": Multiply, "/": Divide}[op](left, right)
 
 
 def reduce_stack(output, ops):
