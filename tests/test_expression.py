@@ -1,7 +1,7 @@
 import pytest
 from sheet_engine.SpreadSheet import Expression
-from sheet_engine.expr_types import (
-    Expr,
+from sheet_engine.formula import (
+    Formula,
     LiteralInt,
     CellId,
     Plus,
@@ -14,27 +14,38 @@ from sheet_engine.expr_types import (
 
 def test_simple_expr():
     expr = Expression("=A1+5")
+    assert repr(expr.tree) == "Sum(CellId(A1), LiteralInt(5))"
 
-    assert isinstance(expr.tree, Sum)
+    expr = Expression("=A1+5*5")
+    assert repr(expr.tree) == "Sum(CellId(A1), Multiply(LiteralInt(5), LiteralInt(5)))"
 
-    assert isinstance(expr.tree.expr_lst[0], CellId)
-    assert expr.tree.expr_lst[0].name == "A1"
-
-    assert isinstance(expr.tree.expr_lst[1], LiteralInt)
-    assert expr.tree.expr_lst[1].value == 5
-
-
-def test_sum():
     expr = Expression("=A1+C2+3")
-    tree = expr.tree
-    assert isinstance(tree, Sum)
-    assert len(tree.expr_lst) == 3
-    assert isinstance(tree.expr_lst[0], CellId)
-    assert tree.expr_lst[0].name == "A1"
-    assert isinstance(tree.expr_lst[1], CellId)
-    assert tree.expr_lst[1].name == "C2"
-    assert isinstance(tree.expr_lst[2], LiteralInt)
-    assert tree.expr_lst[2].value == 3
+    assert repr(expr.tree) == "Sum(CellId(A1), CellId(C2), LiteralInt(3))"
+
+
+def test_sum_func():
+    expr = Expression("=Sum(A1, 5, C3)")
+    assert repr(expr.tree) == "Sum(CellId(A1), LiteralInt(5), CellId(C3))"
+
+
+def test_concat_func():
+    expr = Expression("=Concat(A1, B2, 3)")
+    assert repr(expr.tree) == "Concat(CellId(A1), CellId(B2), LiteralInt(3))"
+
+
+def test_max_min_funcs():
+    expr = Expression("=Max(1, A1, 7)")
+    assert repr(expr.tree) == "Max(LiteralInt(1), CellId(A1), LiteralInt(7))"
+
+    expr = Expression("=Min(A1, B2)")
+    assert repr(expr.tree) == "Min(CellId(A1), CellId(B2))"
+
+
+def test_nested_funcs():
+    expr = Expression("=Sum(If(A1, 1, 0), Max(3, 4))")
+    assert repr(expr.tree) == (
+        "Sum(If(CellId(A1), LiteralInt(1), LiteralInt(0)), Max(LiteralInt(3), LiteralInt(4)))"
+    )
 
 
 # python -m pytest tests/test_expression.py

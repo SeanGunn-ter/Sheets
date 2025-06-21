@@ -43,20 +43,27 @@ class Spreadsheet:
             self._clear_dependent_values(dependent)
 
     def _update_deps(self, name: str, expr: str) -> None:
+
+        # remove old rev_deps
+        old_deps = self.deps.get(name, set())
+        for dep in old_deps:
+            if name in self.rev_deps.get(dep, set()):
+                self.rev_deps[dep].remove(name)
+
         expr_obj = Expression(expr)
         dependencies = expr_obj.get_dependencies()
+        # re-write deps
         self.deps[name] = dependencies
 
         if self._has_cycle(name, name, set()):
             raise ValueError("Circular dependency detected")
 
-        if expr_obj.expr_type == ExpressionType.FORMULA:
-            for dep in dependencies:
-                # add name to rev_deps list (dict where if key changes value, all items in set its holding must change)
-                if dep in self.rev_deps:
-                    self.rev_deps[dep].add(name)
-                else:
-                    self.rev_deps[dep] = {name}
+        for dep in dependencies:
+            # add name to rev_deps list (dict where if key changes value, all items in set its holding must change)
+            if dep in self.rev_deps:
+                self.rev_deps[dep].add(name)
+            else:
+                self.rev_deps[dep] = {name}
 
     def _has_cycle(self, start: str, current: str, visited: set) -> bool:
         if current in visited:

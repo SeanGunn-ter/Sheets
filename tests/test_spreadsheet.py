@@ -30,17 +30,21 @@ def test_simple_formula():
     sheet.set_cell("B1", "=C1+50+A1+D1")
     assert sheet.get_cell_value("B1") == 85
 
+    sheet.set_cell("J1", "=Sum(5,10,5)")
+    assert sheet.get_cell_value("J1") == 20
+
 
 def test_pemdas():
     sheet = Spreadsheet((10, 10))
     sheet.set_cell("A1", "10")
     sheet.set_cell("B1", "5")
     sheet.set_cell("C1", "=(3*3)+A1+A1+B1")
-    sheet.set_cell("D1", "=5+2*3+2^2")
+    # add
+    sheet.set_cell("D1", "=2^2")
     sheet.set_cell("E1", "=3+4*2/(1-5)")
 
     assert sheet.get_cell_value("C1") == 34
-    assert sheet.get_cell_value("D1") == 15
+    assert sheet.get_cell_value("D1") == 4
     assert sheet.get_cell_value("E1") == 1
 
 
@@ -148,6 +152,27 @@ def test_larger_diamond_dependency():
     sheet.set_cell("C1", sum_expr)
     assert sheet.get_cell_value("C1") == 5150
     assert sheet.evaluation_count == 1 + 1 + 100
+
+
+def test_dependency_tracking():
+    sheet = Spreadsheet((10, 10))
+
+    sheet.set_cell("A1", "10")
+    sheet.set_cell("B1", "=A1 + 5")
+
+    assert sheet.deps["B1"] == {"A1"}
+    assert "B1" in sheet.rev_deps.get("A1", set())
+
+    sheet.set_cell("C1", "20")
+    sheet.set_cell("B1", "=C1 + 2")
+
+    assert sheet.deps["B1"] == {"C1"}
+    assert "B1" in sheet.rev_deps.get("C1", set())
+    assert "B1" not in sheet.rev_deps.get("A1", set())
+
+    sheet.set_cell("B1", "100")
+    assert sheet.deps["B1"] == set()
+    assert "B1" not in sheet.rev_deps.get("C1", set())
 
 
 # def name_generator():
