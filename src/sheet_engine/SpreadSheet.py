@@ -1,4 +1,9 @@
-from .Expression import Expression, ExpressionType
+from .Expression import Expression
+
+
+# ToDo
+
+# get eval count working again
 
 
 class Spreadsheet:
@@ -82,6 +87,7 @@ class Spreadsheet:
         value_dict = {}
         for cell in dependencies:
             value_dict[cell] = self.get_cell_value(cell)
+
         return value_dict
 
 

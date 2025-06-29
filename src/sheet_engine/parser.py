@@ -1,4 +1,5 @@
-import re
+from .tokenizer import tokenize
+from .token import Token
 from .formula import (
     Formula,
     LiteralInt,
@@ -11,11 +12,8 @@ from .formula import (
     Concat,
     Max,
     Min,
+    Power,
 )
-
-
-def tokenize(expr: str):
-    return re.findall(r"Sum|Concat|Max|Min|If|[A-Z]+\d+|\d+|[+\-*/(),]", expr)
 
 
 def parse_expr(expr: str) -> Formula:
@@ -23,7 +21,7 @@ def parse_expr(expr: str) -> Formula:
     return parse_tokens(tokens)
 
 
-def parse_tokens(tokens: list) -> Formula:
+def parse_tokens(tokens: list[Token]) -> Formula:
     output = []
     ops = []
     i = 0
@@ -31,29 +29,36 @@ def parse_tokens(tokens: list) -> Formula:
     while i < len(tokens):
         token = tokens[i]
 
-        if re.fullmatch(r"\d+", token):
-            output.append(LiteralInt(int(token)))
+        if token.type == "int":
+            output.append(LiteralInt(int(token.value)))
             i += 1
-        elif re.fullmatch(r"[A-Z]+\d+", token):
-            output.append(CellId(token))
+        elif token.type == "cell":
+            output.append(CellId(token.value))
             i += 1
-        elif token in {"Sum", "If", "Concat", "Max", "Min"}:
-            func_expr, i = _parse_func_call(tokens, i, token)
+        elif token.type == "func":
+            func_expr, i = _parse_func_call(tokens, i, token.value)
             output.append(func_expr)
-        elif token in "+-*/":
-            while ops and ops[-1] != "(" and _precedence(ops[-1]) >= _precedence(token):
+        elif token.type == "op":
+            while (
+                ops
+                and ops[-1].type != "paren"
+                and _precedence(ops[-1].value) >= _precedence(token.value)
+            ):
                 _reduce_stack(output, ops)
             ops.append(token)
             i += 1
-        elif token == "(":
+        elif token.type == "paren" and token.value == "(":
             ops.append(token)
             i += 1
-        elif token == ")":
-            while ops and ops[-1] != "(":
+        elif token.type == "paren" and token.value == ")":
+            while ops and not (ops[-1].type == "paren" and ops[-1].value == "("):
                 _reduce_stack(output, ops)
-            if not ops or ops[-1] != "(":
+            if not ops or not (ops[-1].type == "paren" and ops[-1].value == "("):
                 raise ValueError("Mismatched parentheses")
             ops.pop()
+            i += 1
+        elif token.type == "comma":
+            # delt w/ in _parse_func_call
             i += 1
         else:
             raise ValueError(f"Unexpected token: {token}")
@@ -69,14 +74,14 @@ def parse_tokens(tokens: list) -> Formula:
 
 def _reduce_stack(output, ops):
     # postfix to Formula
-    op = ops.pop()
+    op = ops.pop().value
     right = output.pop()
     left = output.pop()
     output.append(_to_expr(op, left, right))
 
 
 def _precedence(op):
-    return {"+": 1, "-": 1, "*": 2, "/": 2}.get(op, 0)
+    return {"+": 1, "-": 1, "*": 2, "/": 2, "^": 3}.get(op, 0)
 
 
 def _to_expr(op, left, right):
@@ -94,7 +99,7 @@ def _to_expr(op, left, right):
         collect(right)
         return Sum(parts)
 
-    return {"-": Minus, "*": Multiply, "/": Divide}[op](left, right)
+    return {"-": Minus, "*": Multiply, "/": Divide, "^": Power}[op](left, right)
 
 
 # finds index where arg ends
@@ -102,7 +107,7 @@ def _find_argument_end(tokens, start):
     depth = 0
     i = start
     while i < len(tokens):
-        t = tokens[i]
+        t = tokens[i].value
         if t == "(":
             depth += 1
         elif t == ")":
@@ -116,7 +121,7 @@ def _find_argument_end(tokens, start):
 
 
 def _parse_func_call(tokens, i, func_name):
-    if i + 1 >= len(tokens) or tokens[i + 1] != "(":
+    if i + 1 >= len(tokens) or tokens[i + 1].value != "(":
         raise ValueError(f"Expected '(' after function name '{func_name}'")
 
     i += 2  # skip function name and '('
@@ -127,7 +132,7 @@ def _parse_func_call(tokens, i, func_name):
     while i < len(tokens) and not done:
         token = tokens[i]
 
-        if token == ")":
+        if token.value == ")":
             done = True
             i += 1
         elif expecting_arg:
@@ -137,7 +142,7 @@ def _parse_func_call(tokens, i, func_name):
             i = end
             expecting_arg = False
         else:
-            if token == ",":
+            if token.type == "comma":
                 i += 1
                 expecting_arg = True
             else:
@@ -155,8 +160,6 @@ def _parse_func_call(tokens, i, func_name):
     elif func_name == "Min":
         return Min(args), i
     elif func_name == "If":
-        if len(args) != 3:
-            raise ValueError("If expects 3 arguments")
-        return If(args[0], args[1], args[2]), i
+        return If(args), i
     else:
         raise ValueError(f"Unknown function '{func_name}'")

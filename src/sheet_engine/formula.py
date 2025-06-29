@@ -1,5 +1,18 @@
-class Formula:
-    pass
+from abc import ABC, abstractmethod
+
+
+class Formula(ABC):
+    @abstractmethod
+    def evaluate(self, get_value):
+        pass
+
+    @abstractmethod
+    def get_dependencies(self):
+        pass
+
+    @abstractmethod
+    def __repr__(self):
+        pass
 
 
 class LiteralInt(Formula):
@@ -201,10 +214,10 @@ class Min(Formula):
 
 
 class If(Formula):
-    def __init__(self, condition: Formula, then_expr: Formula, else_expr: Formula):
-        self.condition = condition
-        self.then_expr = then_expr
-        self.else_expr = else_expr
+    def __init__(self, formula_lst):
+        self.condition = formula_lst[0]
+        self.then_expr = formula_lst[1]
+        self.else_expr = formula_lst[2]
 
     def evaluate(self, get_value):
         cond = self.condition.evaluate(get_value)

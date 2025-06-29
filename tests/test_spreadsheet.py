@@ -175,52 +175,52 @@ def test_dependency_tracking():
     assert "B1" not in sheet.rev_deps.get("C1", set())
 
 
-# def name_generator():
-#     col = 0
-#     row = 1
-#     while True:
-#         n = col
-#         name = ""
-#         while True:
-#             name = chr(n % 26 + 65) + name  # 65 = A asci
-#             # shift range done by one, n=26:"A", 26//26==1-1=0
-#             n = n // 26 - 1
+def name_gen():
+    col = 0
+    row = 1
+    while True:
+        n = col
+        name = ""
+        while True:
+            name = chr(n % 26 + 65) + name  # 65 = A asci
+            # shift range done by one, n=26:"A", 26//26==1-1=0
+            n = n // 26 - 1
 
-#             if n < 0:
-#                 break
+            if n < 0:
+                break
 
-#         yield f"{name}{row}"
-#         row += 1
-
-
-# def build_tree(sheet: Spreadsheet, name_gen: function, depth: int, leaf_names: list):
-#     name = next(name_gen)
-#     if depth == 0:
-#         sheet.set_cell(name, "1")
-#         leaf_names.append(name)  # track this leaf
-#         return name
-
-#     left = build_tree(sheet, name_gen, depth - 1, leaf_names)
-#     right = build_tree(sheet, name_gen, depth - 1, leaf_names)
-#     sheet.set_cell(name, f"={left}+{right}")
-#     return name
+        yield f"{name}{row}"
+        row += 1
 
 
-# def test_binary_tree_depth_3():
-#     sheet = Spreadsheet((50, 50))
-#     gen = name_generator()
-#     leaf_names = []
-#     root = build_tree(sheet, gen, depth=3, leaf_names=leaf_names)
+def build_tree(sheet: Spreadsheet, name_gen, depth: int, leaf_names: list):
+    name = next(name_gen)
+    if depth == 0:
+        sheet.set_cell(name, "1")
+        leaf_names.append(name)  # track this leaf
+        return name
 
-#     assert sheet.get_cell_value(root) == 8  # 8 leaves
-#     assert sheet.evaluation_count == 15
+    left = build_tree(sheet, name_gen, depth - 1, leaf_names)
+    right = build_tree(sheet, name_gen, depth - 1, leaf_names)
+    sheet.set_cell(name, f"={left}+{right}")
+    return name
 
-#     leaf_to_update = leaf_names[0]  # first leaf
-#     sheet.set_cell(leaf_to_update, "10")
 
-#     sheet.evaluation_count = 0
-#     assert sheet.get_cell_value(root) == 17
-#     assert sheet.evaluation_count == 4  # updated leaf + 3 dependents
+def test_binary_tree_depth_3():
+    sheet = Spreadsheet((50, 50))
+    gen = name_gen()
+    leaf_names = []
+    root = build_tree(sheet, gen, depth=3, leaf_names=leaf_names)
+
+    assert sheet.get_cell_value(root) == 8  # 8 leaves
+    assert sheet.evaluation_count == 15
+
+    leaf_to_update = leaf_names[0]  # first leaf
+    sheet.set_cell(leaf_to_update, "10")
+
+    sheet.evaluation_count = 0
+    assert sheet.get_cell_value(root) == 17
+    assert sheet.evaluation_count == 4  # updated leaf + 3 dependents
 
 
 # python -m pytest tests/test_spreadsheet.py

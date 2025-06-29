@@ -1,7 +1,7 @@
 import re
 from enum import Enum, auto
 from .parser import parse_expr
-from .formula import Formula, LiteralInt, CellId, Plus, Minus, Multiply, Divide, Sum
+from .formula import Formula
 
 
 class ExpressionType(Enum):
