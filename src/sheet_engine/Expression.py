@@ -29,7 +29,7 @@ class Expression:
         if self.expr_type == ExpressionType.INTEGER:
             return int(self.expr)
         if self.expr_type == ExpressionType.LITERAL:
-            raise ValueError("Can't evaluate yet")
+            return self.expr
 
         def get_val(name):
             return value_dict[name]

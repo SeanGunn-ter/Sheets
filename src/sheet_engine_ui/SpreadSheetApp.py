@@ -41,13 +41,13 @@ class SpreadsheetApp(App):
             index = index // 26 - 1
         return name
 
-    def _generate_col_names(self, table, cols=10):
+    def _generate_col_names(self, table, cols=43):
         # col 0 -> A
         table.add_column("")
         for col in range(cols):
             table.add_column(self._col_name(col))
 
-    def _generate_row_names(self, table, cols=10, rows=10):
+    def _generate_row_names(self, table, cols=43, rows=43):
 
         for row in range(rows):
             blank_cells = []
@@ -78,7 +78,7 @@ class SpreadsheetApp(App):
                     for dep in rev_deps:
                         value = self.sheet.get_cell_value(dep)
                         cords = self.cell_name_to_cords(dep)
-                        self.table.update_cell_at(cords, value, update_width=True)
+                        table.update_cell_at(cords, value, update_width=True)
 
             # reset input
             input_widget.value = ""

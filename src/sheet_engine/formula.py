@@ -29,6 +29,20 @@ class LiteralInt(Formula):
         return f"LiteralInt({self.value})"
 
 
+class LiteralStr(Formula):
+    def __init__(self, value: str):
+        self.value = value
+
+    def evaluate(self, get_value):
+        return self.value
+
+    def get_dependencies(self):
+        return set()
+
+    def __repr__(self):
+        return f"LiteralStr({self.value})"
+
+
 class CellId(Formula):
     def __init__(self, name: str):
         self.name = name

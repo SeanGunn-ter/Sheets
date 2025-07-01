@@ -7,10 +7,12 @@ def test_constant_value():
     sheet.set_cell("A1", "10")
     sheet.set_cell("B1", "11")
     sheet.set_cell("C1", "12")
+    sheet.set_cell("D1", "Hello")
 
     assert sheet.get_cell_value("A1") == 10
     assert sheet.get_cell_value("B1") == 11
     assert sheet.get_cell_value("C1") == 12
+    assert sheet.get_cell_value("D1") == "Hello"
 
 
 def test_simple_formula():
@@ -222,6 +224,14 @@ def test_binary_tree_depth_3():
     sheet.evaluation_count = 0
     assert sheet.get_cell_value(root) == 17
     assert sheet.evaluation_count == 4  # updated leaf + 3 dependents
+
+
+def test_formula():
+    sheet = Spreadsheet()
+    sheet.set_cell("B1", "Hello")
+    sheet.set_cell("C1", "World")
+    sheet.set_cell("A1", "=Concat(B1,C1,100)")
+    assert sheet.get_cell_value("A1") == "HelloWorld100"
 
 
 # python -m pytest tests/test_spreadsheet.py
