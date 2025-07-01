@@ -3,17 +3,14 @@ from .Expression import Expression
 
 # ToDo
 
-# get eval count working again
-
 
 class Spreadsheet:
-    def __init__(self, size: tuple):  # (col,row)
+    def __init__(self):  # (col,row)
         self.cells = {}  # stores str expr
         self.values = {}
         # reverse dependency dict- if key changes value, all items in set its holding must change
         self.rev_deps = {}
         self.deps = {}
-        self.size = size  # tuple (column,row)
         self.evaluation_count = 0  # for testing
 
     def set_cell(self, name: str, expr: str) -> None:

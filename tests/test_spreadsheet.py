@@ -3,7 +3,7 @@ from sheet_engine.SpreadSheet import Spreadsheet
 
 
 def test_constant_value():
-    sheet = Spreadsheet((10, 10))
+    sheet = Spreadsheet()
     sheet.set_cell("A1", "10")
     sheet.set_cell("B1", "11")
     sheet.set_cell("C1", "12")
@@ -14,7 +14,7 @@ def test_constant_value():
 
 
 def test_simple_formula():
-    sheet = Spreadsheet((10, 10))
+    sheet = Spreadsheet()
     sheet.set_cell("A1", "10")
     sheet.set_cell("B1", "=A1+5")
     sheet.set_cell("C1", "15")
@@ -35,26 +35,27 @@ def test_simple_formula():
 
 
 def test_pemdas():
-    sheet = Spreadsheet((10, 10))
+    sheet = Spreadsheet()
     sheet.set_cell("A1", "10")
     sheet.set_cell("B1", "5")
     sheet.set_cell("C1", "=(3*3)+A1+A1+B1")
     # add
     sheet.set_cell("D1", "=2^2")
     sheet.set_cell("E1", "=3+4*2/(1-5)")
-
+    sheet.set_cell("H1", "=5+5")
     assert sheet.get_cell_value("C1") == 34
     assert sheet.get_cell_value("D1") == 4
     assert sheet.get_cell_value("E1") == 1
+    assert sheet.get_cell_value("H1") == 10
 
 
 def test_circular_reference_detection():
-    sheet = Spreadsheet((10, 10))
+    sheet = Spreadsheet()
     sheet.set_cell("A1", "=B1")
     with pytest.raises(ValueError, match="Circular dependency detected"):
         sheet.set_cell("B1", "=A1")
 
-    sheet2 = Spreadsheet((10, 10))
+    sheet2 = Spreadsheet()
     sheet2.set_cell("A1", "5")
     sheet2.set_cell("B1", "=A1+5")
     with pytest.raises(ValueError, match="Circular dependency detected"):
@@ -62,7 +63,7 @@ def test_circular_reference_detection():
 
 
 def test_intensive_dependencies():
-    sheet = Spreadsheet((10, 10))
+    sheet = Spreadsheet()
 
     sheet.set_cell("A1", "1")
     sheet.set_cell("A2", "=A1 + 1")
@@ -78,7 +79,7 @@ def test_intensive_dependencies():
     assert sheet.get_cell_value("A5") == 9
     assert sheet.get_cell_value("B1") == 16
 
-    sheet2 = Spreadsheet((10, 10))
+    sheet2 = Spreadsheet()
 
     sheet2.set_cell("A1", "1")
     sheet2.set_cell("A2", "=A1 + 1")
@@ -94,7 +95,7 @@ def test_intensive_dependencies():
     assert sheet2.get_cell_value("A5") == 3
     assert sheet2.get_cell_value("B1") == 4
 
-    sheet3 = Spreadsheet((10, 10))
+    sheet3 = Spreadsheet()
 
     sheet3.set_cell("A1", "1")
     sheet3.set_cell("A2", "=A1 + 1")
@@ -112,7 +113,7 @@ def test_intensive_dependencies():
 
 
 def test_diamond_dependency():
-    sheet = Spreadsheet((100, 100))
+    sheet = Spreadsheet()
     sheet.set_cell("A1", "1")
     sheet.set_cell("B1", "=A1 + 1")
     sheet.set_cell("C1", "=A1 + 2")
@@ -123,7 +124,7 @@ def test_diamond_dependency():
 
 
 def test_larger_diamond_dependency():
-    sheet = Spreadsheet((100, 100))
+    sheet = Spreadsheet()
     width = 5
     sheet.set_cell("A1", "1")
 
@@ -140,7 +141,7 @@ def test_larger_diamond_dependency():
     # this is working as intended, A1: evaluated once, B1-B5: evaluated 5 times, C1-C5: evaluated 5 times, D1:evaluted once
     assert sheet.evaluation_count == 12
 
-    sheet = Spreadsheet((200, 200))
+    sheet = Spreadsheet()
     width = 100
 
     sheet.set_cell("A1", "1")
@@ -155,7 +156,7 @@ def test_larger_diamond_dependency():
 
 
 def test_dependency_tracking():
-    sheet = Spreadsheet((10, 10))
+    sheet = Spreadsheet()
 
     sheet.set_cell("A1", "10")
     sheet.set_cell("B1", "=A1 + 5")
@@ -207,7 +208,7 @@ def build_tree(sheet: Spreadsheet, name_gen, depth: int, leaf_names: list):
 
 
 def test_binary_tree_depth_3():
-    sheet = Spreadsheet((50, 50))
+    sheet = Spreadsheet()
     gen = name_gen()
     leaf_names = []
     root = build_tree(sheet, gen, depth=3, leaf_names=leaf_names)
