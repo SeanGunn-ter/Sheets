@@ -1,5 +1,5 @@
 from .tokenizer import tokenize
-from .token import Token
+from .token import Token, TokenType
 from .formula import (
     Formula,
     LiteralInt,
@@ -26,39 +26,40 @@ def parse_tokens(tokens: list[Token]) -> Formula:
     while i < len(tokens):
         token = tokens[i]
 
-        if token.type == "int":
-            output.append(LiteralInt(int(token.value)))
-            i += 1
-        elif token.type == "cell":
-            output.append(CellId(token.value))
-            i += 1
-        elif token.type == "func":
-            func_expr, i = _parse_func_call(tokens, i, token.value)
-            output.append(func_expr)
-        elif token.type == "op":
-            while (
-                ops
-                and ops[-1].type != "paren"
-                and _precedence(ops[-1].value) >= _precedence(token.value)
-            ):
-                _reduce_stack(output, ops)
-            ops.append(token)
-            i += 1
-        elif token.type == "paren" and token.value == "(":
-            ops.append(token)
-            i += 1
-        elif token.type == "paren" and token.value == ")":
-            while ops and not (ops[-1].type == "paren" and ops[-1].value == "("):
-                _reduce_stack(output, ops)
-            if not ops or not (ops[-1].type == "paren" and ops[-1].value == "("):
-                raise ValueError("Mismatched parentheses")
-            ops.pop()
-            i += 1
-        elif token.type == "comma":
-            # delt w/ in _parse_func_call
-            i += 1
-        else:
-            raise ValueError(f"Unexpected token: {token}")
+        match (token.type):
+
+            case TokenType.INT:
+                output.append(LiteralInt(int(token.value)))
+                i += 1
+            case TokenType.CELL:
+                output.append(CellId(token.value))
+                i += 1
+            case TokenType.FUNC:
+                func_expr, i = _parse_func_call(tokens, i, token.value)
+                output.append(func_expr)
+            case TokenType.OP:
+                while (
+                    ops
+                    and ops[-1].type != "paren"
+                    and _precedence(ops[-1].value) >= _precedence(token.value)
+                ):
+                    _reduce_stack(output, ops)
+                ops.append(token)
+                i += 1
+            case TokenType.PAREN_OPEN:
+                ops.append(token)
+                i += 1
+            case TokenType.PAREN_CLOSE:
+                while ops and not (ops[-1].type == "paren" and ops[-1].value == "("):
+                    _reduce_stack(output, ops)
+                if not ops or not (ops[-1].type == "paren" and ops[-1].value == "("):
+                    raise ValueError("Mismatched parentheses")
+                ops.pop()
+                i += 1
+            case TokenType.COMMA:
+                i += 1  # handled in _parse_func_call
+            case _:
+                raise ValueError(f"Unexpected token: {token}")
 
     while ops:
         _reduce_stack(output, ops)

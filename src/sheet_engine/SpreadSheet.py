@@ -2,8 +2,6 @@ from .Expression import Expression
 
 
 # ToDo
-# token enum
-# parser match case
 
 
 class Spreadsheet:

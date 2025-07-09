@@ -49,8 +49,12 @@ def tokenize(expr: str) -> list[Token]:
             i += 1
 
         # Paren
-        elif ch in "()":
-            tokens.append(Token("paren", ch))
+        elif ch in "(":
+            tokens.append(Token("paren_open", ch))
+            i += 1
+
+        elif ch in ")":
+            tokens.append(Token("paren_close", ch))
             i += 1
 
         # Comma
