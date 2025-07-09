@@ -1,51 +1,50 @@
 from textual.app import App, ComposeResult
 from textual.widgets import DataTable, Input, Static
 from textual.containers import Container, Vertical
+from rich.text import Text
 from sheet_engine.SpreadSheet import Spreadsheet
 
 
 class SpreadsheetApp(App):
     CSS = """
         #main {
-            padding: 1;
             height: 100%;
+            padding: 1;
         }
 
-        #header {
-            content-align: center middle;
+        #header,
+        #cell-header {
             height: 3;
-            border: round green;
+            content-align: center middle;
+            border: round #4caf50;         
+            background: #121212;           
             text-style: bold;
         }
 
         #table-wrapper {
-            border: round green;
             height: 2fr;
-            background: $panel;
             padding: 1;
+            background: #121212;           
+            border: round #4caf50;         
         }
 
         #input-wrapper {
-            border: round green;
             height: 0.5fr;
-            background: $panel;
             padding: 1;
-            layout: horizontal; 
+            layout: horizontal;
             content-align: center middle;
+            background: #121212;          
+            border: round #4caf50;        
         }
 
         #editor {
             width: 100%;
             height: 100%;
-            border: round green;
             padding: 0;
+            border: round #4caf50;         
+            background: #121212;                       
         }
-        #cell-header {
-            content-align: center middle;
-            height: 3;
-            border: round green;
-            text-style: bold;
-        }
+
  
         """
 
@@ -68,7 +67,7 @@ class SpreadsheetApp(App):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="main"):
-            yield Static("SpreadSheetApp", id="header")
+            yield Static("Spread Sheet App", id="header")
 
             with Container(id="table-wrapper"):
                 yield DataTable(id="table")
@@ -80,9 +79,11 @@ class SpreadsheetApp(App):
         print("yoooo")
         self.table = self.query_one("#table", DataTable)
         self.input = self.query_one("#editor", Input)
+        self.input.display = False
 
         self.table.fixed_columns = 1
-        self._generate_col_names(self.table)
+        self.table.zebra_stripes = True
+        self._generate_cols(self.table)
         self._generate_rows(self.table)
 
     def _col_name(self, index: int) -> str:
@@ -92,12 +93,14 @@ class SpreadsheetApp(App):
             index = index // 26 - 1
         return name
 
-    def _generate_col_names(self, table):
+    def _generate_cols(self, table):
         # col 0 -> A
-        table.add_column("")
+        col_key = table.add_column("")
+        self.col_key_to_name[col_key] = ""
         for col in range(self.col_count):
             name = self._col_name(col)
-            col_key = table.add_column(name)
+            header = Text(name, justify="center")
+            col_key = table.add_column(header)
             self.col_key_to_name[col_key] = name
             self.col_name_to_key[name] = col_key
 
@@ -112,14 +115,20 @@ class SpreadsheetApp(App):
 
     async def on_data_table_cell_selected(self, event: DataTable.CellSelected) -> None:
 
-        self.input.focus()
         row_key, col_key = event.cell_key
-        self.current_cell = (row_key, col_key)
+        col_name = self.col_key_to_name.get(col_key)
+        if col_name == "":
+            self.input.display = False
+            return
+        else:
+            self.input.display = True
+            self.input.focus()
+            self.current_cell = (row_key, col_key)
 
-        name = self._keys_to_cell_name(row_key, col_key)
-        formula = self.sheet.get_cell_expr(name)
+            name = self._keys_to_cell_name(row_key, col_key)
+            formula = self.sheet.get_cell_expr(name)
 
-        self.input.value = formula if formula is not None else ""
+            self.input.value = formula if formula is not None else ""
 
     async def on_input_submitted(self, event: Input.Submitted) -> None:
         input_widget = event.input
