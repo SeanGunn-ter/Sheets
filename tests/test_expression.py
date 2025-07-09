@@ -1,15 +1,5 @@
-import pytest
+import pytest  # noqa: F401
 from sheet_engine.SpreadSheet import Expression
-from sheet_engine.formula import (
-    Formula,
-    LiteralInt,
-    CellId,
-    Plus,
-    Minus,
-    Multiply,
-    Divide,
-    Sum,
-)
 
 
 def test_basic_operators():

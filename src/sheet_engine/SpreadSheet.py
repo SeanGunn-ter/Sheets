@@ -2,6 +2,8 @@ from .Expression import Expression
 
 
 # ToDo
+# token enum
+# parser match case
 
 
 class Spreadsheet:
@@ -100,3 +102,4 @@ if __name__ == "__main__":
 
 
 # python -m src.sheet_engine.SpreadSheet
+# python -m src.sheet_engine_ui.spread_sheet_app

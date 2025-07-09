@@ -10,12 +10,24 @@ requires-python = ">=3.11"
 dependencies = [
     "pytest>=8.3.5",
     "ruff>=0.11.11",
+    "textual>=0.56.4"
 ]
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
 
 
 [tool.hatch.build.targets.wheel]
 packages = ["sheet_engine", "sheet_engine_ui"]
+
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+
+[project.scripts]
+spreadsheet-app = "sheet_engine_ui.spread_sheet_app:main"

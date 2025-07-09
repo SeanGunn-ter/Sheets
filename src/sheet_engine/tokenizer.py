@@ -1,5 +1,8 @@
 import re
 from .token import Token
+from .formula import (
+    ALL_FUNCTION_NAMES,
+)
 
 
 def tokenize(expr: str) -> list[Token]:
@@ -14,21 +17,16 @@ def tokenize(expr: str) -> list[Token]:
             continue
 
         # function names
-        if expr.startswith("Sum", i):
-            tokens.append(Token("func", "Sum"))
-            i += 3
-        elif expr.startswith("Concat", i):
-            tokens.append(Token("func", "Concat"))
-            i += 6
-        elif expr.startswith("Max", i):
-            tokens.append(Token("func", "Max"))
-            i += 3
-        elif expr.startswith("Min", i):
-            tokens.append(Token("func", "Min"))
-            i += 3
-        elif expr.startswith("If", i):
-            tokens.append(Token("func", "If"))
-            i += 2
+        matched = False
+        for name in ALL_FUNCTION_NAMES:
+            if expr.startswith(name[0], i):
+                tokens.append(Token("func", name[0]))
+                i += len(name[0])
+                matched = True
+                break
+
+        if matched:
+            continue
 
         # Cell
         elif re.match(r"[A-Z]", ch):

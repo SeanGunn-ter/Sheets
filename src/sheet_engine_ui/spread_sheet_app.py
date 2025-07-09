@@ -3,6 +3,20 @@ from textual.widgets import DataTable, Input
 from textual.containers import Container
 from sheet_engine.SpreadSheet import Spreadsheet
 
+# todo
+
+# keys working
+# figure out if it stores selected cell
+# editor to show expr
+
+# open close paren
+
+# concat doesnt work w/ str
+
+# make > and < and = work
+
+# for loop for tokenizor.py
+
 
 class SpreadsheetApp(App):
     show_log = True
@@ -19,6 +33,7 @@ class SpreadsheetApp(App):
         super().__init__()
         self.sheet = Spreadsheet()
         self.current_cell = None
+        self.t = None
 
     def compose(self) -> ComposeResult:
         yield DataTable(id="table")
@@ -27,12 +42,13 @@ class SpreadsheetApp(App):
 
     def on_mount(self) -> None:
         table = self.query_one("#table", DataTable)
+        self.t = table
 
         table.fixed_rows = 1
         table.fixed_columns = 1
 
         self._generate_col_names(table)
-        self._generate_row_names(table)
+        self._generate_rows(table)
 
     def _col_name(self, index: int) -> str:
         name = ""
@@ -47,7 +63,7 @@ class SpreadsheetApp(App):
         for col in range(cols):
             table.add_column(self._col_name(col))
 
-    def _generate_row_names(self, table, cols=43, rows=43):
+    def _generate_rows(self, table, cols=43, rows=43):
 
         for row in range(rows):
             blank_cells = []
@@ -108,5 +124,9 @@ class SpreadsheetApp(App):
         return (row_index, col_index)
 
 
-if __name__ == "__main__":
+def main():
     SpreadsheetApp().run()
+
+
+if __name__ == "__main__":
+    main()

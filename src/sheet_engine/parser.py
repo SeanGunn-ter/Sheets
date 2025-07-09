@@ -8,11 +8,8 @@ from .formula import (
     Multiply,
     Divide,
     Sum,
-    If,
-    Concat,
-    Max,
-    Min,
     Power,
+    ALL_FUNCTION_NAMES,
 )
 
 
@@ -151,15 +148,8 @@ def _parse_func_call(tokens, i, func_name):
     if not done:
         raise ValueError("Expected ')' to close function call")
 
-    if func_name == "Sum":
-        return Sum(args), i
-    elif func_name == "Concat":
-        return Concat(args), i
-    elif func_name == "Max":
-        return Max(args), i
-    elif func_name == "Min":
-        return Min(args), i
-    elif func_name == "If":
-        return If(args), i
-    else:
-        raise ValueError(f"Unknown function '{func_name}'")
+    for name, cls in ALL_FUNCTION_NAMES:
+        if func_name == name:
+            return cls(args), i
+
+    raise ValueError(f"Unknown function '{func_name}'")

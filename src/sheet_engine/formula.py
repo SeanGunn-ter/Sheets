@@ -250,3 +250,12 @@ class If(Formula):
 
     def __repr__(self):
         return f"If({repr(self.condition)}, {repr(self.then_expr)}, {repr(self.else_expr)})"
+
+
+ALL_FUNCTION_NAMES = [
+    ("If", If),
+    ("Sum", Sum),
+    ("Concat", Concat),
+    ("Max", Max),
+    ("Min", Min),
+]
