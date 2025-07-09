@@ -1,54 +1,89 @@
 from textual.app import App, ComposeResult
-from textual.widgets import DataTable, Input
-from textual.containers import Container
+from textual.widgets import DataTable, Input, Static
+from textual.containers import Container, Vertical
 from sheet_engine.SpreadSheet import Spreadsheet
-
-# todo
-
-# keys working
-# figure out if it stores selected cell
-# editor to show expr
-
-# open close paren
-
-# concat doesnt work w/ str
-
-# make > and < and = work
-
-# for loop for tokenizor.py
 
 
 class SpreadsheetApp(App):
-    show_log = True
+    CSS = """
+        #main {
+            padding: 1;
+            height: 100%;
+        }
+
+        #header {
+            content-align: center middle;
+            height: 3;
+            border: round green;
+            text-style: bold;
+        }
+
+        #table-wrapper {
+            border: round green;
+            height: 2fr;
+            background: $panel;
+            padding: 1;
+        }
+
+        #input-wrapper {
+            border: round green;
+            height: 0.5fr;
+            background: $panel;
+            padding: 1;
+            layout: horizontal; 
+            content-align: center middle;
+        }
+
+        #editor {
+            width: 100%;
+            height: 100%;
+            border: round green;
+            padding: 0;
+        }
+        #cell-header {
+            content-align: center middle;
+            height: 3;
+            border: round green;
+            text-style: bold;
+        }
+ 
+        """
 
     BINDINGS = [("escape", "quit", "Quit")]
-
-    CSS = """
-    Input {
-        border: none;
-    }
-    """
 
     def __init__(self):
         super().__init__()
         self.sheet = Spreadsheet()
-        self.current_cell = None
-        self.t = None
+        self.table = None
+        self.input = None
+        self.current_cell = None  # (row_key, col_key)
+        self.col_count = 55
+        self.row_count = 32
+
+        self.col_key_to_name = {}
+        self.row_key_to_name = {}
+
+        self.col_name_to_key = {}
+        self.row_name_to_key = {}
 
     def compose(self) -> ComposeResult:
-        yield DataTable(id="table")
-        with Container(id="editor-container"):
-            yield Input(placeholder="Enter formula", id="editor")
+        with Vertical(id="main"):
+            yield Static("SpreadSheetApp", id="header")
+
+            with Container(id="table-wrapper"):
+                yield DataTable(id="table")
+
+            with Container(id="input-wrapper"):
+                yield Input(placeholder="Enter formula", id="editor")
 
     def on_mount(self) -> None:
-        table = self.query_one("#table", DataTable)
-        self.t = table
+        print("yoooo")
+        self.table = self.query_one("#table", DataTable)
+        self.input = self.query_one("#editor", Input)
 
-        table.fixed_rows = 1
-        table.fixed_columns = 1
-
-        self._generate_col_names(table)
-        self._generate_rows(table)
+        self.table.fixed_columns = 1
+        self._generate_col_names(self.table)
+        self._generate_rows(self.table)
 
     def _col_name(self, index: int) -> str:
         name = ""
@@ -57,71 +92,73 @@ class SpreadsheetApp(App):
             index = index // 26 - 1
         return name
 
-    def _generate_col_names(self, table, cols=43):
+    def _generate_col_names(self, table):
         # col 0 -> A
         table.add_column("")
-        for col in range(cols):
-            table.add_column(self._col_name(col))
+        for col in range(self.col_count):
+            name = self._col_name(col)
+            col_key = table.add_column(name)
+            self.col_key_to_name[col_key] = name
+            self.col_name_to_key[name] = col_key
 
-    def _generate_rows(self, table, cols=43, rows=43):
+    def _generate_rows(self, table):
 
-        for row in range(rows):
-            blank_cells = []
-            for i in range(cols + 1):
-                blank_cells.append("")
+        for row in range(self.row_count):
+            blank_cells = [""] * (self.col_count + 1)
             blank_cells[0] = row + 1
-            table.add_row(*blank_cells)
+            row_key = table.add_row(*blank_cells)
+            self.row_key_to_name[row_key] = row + 1
+            self.row_name_to_key[row + 1] = row_key
+
+    async def on_data_table_cell_selected(self, event: DataTable.CellSelected) -> None:
+
+        self.input.focus()
+        row_key, col_key = event.cell_key
+        self.current_cell = (row_key, col_key)
+
+        name = self._keys_to_cell_name(row_key, col_key)
+        formula = self.sheet.get_cell_expr(name)
+
+        self.input.value = formula if formula is not None else ""
 
     async def on_input_submitted(self, event: Input.Submitted) -> None:
         input_widget = event.input
         formula = input_widget.value
+        row_key = self.current_cell[0]
+        col_key = self.current_cell[1]
 
-        if self.current_cell:
-            row, col = self.current_cell
-            # dont allow editng first col
-            if col != 0:
-                cell_name = self._col_name(col - 1) + str(row + 1)  # skip labels
-                rev_deps = self.sheet.rev_deps.get(cell_name, 0)
-                self.sheet.set_cell(cell_name, formula)
+        col_name = self.col_key_to_name[col_key]
+        row_name = self.row_key_to_name[row_key]
+        cell_name = col_name + str(row_name)
+        self.sheet.set_cell(cell_name, formula)
+        value = self.sheet.get_cell_value(cell_name)
 
-                # update cell
-                value = self.sheet.get_cell_value(cell_name)
-                table = self.query_one("#table", DataTable)
-                table.update_cell_at((row, col), value, update_width=True)
+        self.table.update_cell(row_key, col_key, value, update_width=True)
+        self._update_dependents(cell_name)
 
-                # updates deps
-                if rev_deps:
-                    for dep in rev_deps:
-                        value = self.sheet.get_cell_value(dep)
-                        cords = self.cell_name_to_cords(dep)
-                        table.update_cell_at(cords, value, update_width=True)
+    def _update_dependents(self, cell_name):
+        rev_deps = self.sheet.rev_deps.get(cell_name, [])
+        for dep in rev_deps:
+            value = self.sheet.get_cell_value(dep)
+            row_key, col_key = self._cell_name_to_keys(dep)
+            self.table.update_cell(row_key, col_key, value, update_width=True)
+            self._update_dependents(dep)
 
-            # reset input
-            input_widget.value = ""
+    def _cell_name_to_keys(self, cell_name: str):
+        import re
 
-    async def on_data_table_cell_selected(self, event: DataTable.CellSelected) -> None:
-        self.current_cell = (event.coordinate.row, event.coordinate.column)
-        editor = self.query_one("#editor", Input)
-        editor.focus()
+        match = re.match(r"([A-Z]+)(\d+)", cell_name)
+        if not match:
+            raise ValueError(f"Invalid cell name: {cell_name}")
+        col_name, row_num = match.groups()
+        col_key = self.col_name_to_key.get(col_name)
+        row_key = self.row_name_to_key.get(int(row_num))
+        return (row_key, col_key)
 
-    def cell_name_to_cords(self, name: str) -> tuple:
-        col_part = ""
-        row_part = ""
-        for char in name:
-            if char.isdigit():
-                row_part += char
-            else:
-                col_part += char
-
-        # A -> 0, B -> 1
-        col_index = 0
-        for c in col_part:
-            col_index = col_index * 26 + (ord(c) - ord("A") + 1)
-            # second loop, *26 , so AA -> first loop, col=1, second loop: 1*26+1 =27
-
-        row_index = int(row_part) - 1
-
-        return (row_index, col_index)
+    def _keys_to_cell_name(self, row_key, col_key):
+        col_name = self.col_key_to_name.get(col_key)
+        row_num = self.row_key_to_name.get(row_key)
+        return f"{col_name}{row_num}"
 
 
 def main():

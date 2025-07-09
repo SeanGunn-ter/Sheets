@@ -23,7 +23,8 @@ class Spreadsheet:
         self.cells[name] = expr_obj
 
     def get_cell_expr(self, name: str) -> str:
-        return self.cells[name]
+        print("man")
+        return self.cells.get(name, "")
 
     def get_cell_value(self, name: str) -> int | float:
 
