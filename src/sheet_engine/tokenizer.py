@@ -1,5 +1,5 @@
 import re
-from .token import Token
+from .token import Token, TokenType
 from .formula import (
     ALL_FUNCTION_NAMES,
 )
@@ -20,7 +20,7 @@ def tokenize(expr: str) -> list[Token]:
         matched = False
         for name in ALL_FUNCTION_NAMES:
             if expr.startswith(name[0], i):
-                tokens.append(Token("func", name[0]))
+                tokens.append(Token(TokenType.FUNC, name[0]))
                 i += len(name[0])
                 matched = True
                 break
@@ -32,7 +32,7 @@ def tokenize(expr: str) -> list[Token]:
         elif re.match(r"[A-Z]", ch):
             match = re.match(r"[A-Z]+\d+", expr[i:])
             if match:
-                tokens.append(Token("cell", match.group()))
+                tokens.append(Token(TokenType.CELL, match.group()))
                 i += len(match.group())
             else:
                 raise ValueError(f"Invalid cell reference at position {i}")
@@ -40,26 +40,26 @@ def tokenize(expr: str) -> list[Token]:
         # Integer
         elif ch.isdigit():
             match = re.match(r"\d+", expr[i:])
-            tokens.append(Token("int", match.group()))
+            tokens.append(Token(TokenType.INT, match.group()))
             i += len(match.group())
 
         # Op
         elif ch in "+-*/^":
-            tokens.append(Token("op", ch))
+            tokens.append(Token(TokenType.OP, ch))
             i += 1
 
         # Paren
         elif ch in "(":
-            tokens.append(Token("paren_open", ch))
+            tokens.append(Token(TokenType.PAREN_OPEN, ch))
             i += 1
 
         elif ch in ")":
-            tokens.append(Token("paren_close", ch))
+            tokens.append(Token(TokenType.PAREN_CLOSE, ch))
             i += 1
 
         # Comma
         elif ch == ",":
-            tokens.append(Token("comma", ch))
+            tokens.append(Token(TokenType.COMMA, ch))
             i += 1
 
         else:
