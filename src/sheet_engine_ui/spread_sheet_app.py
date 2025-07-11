@@ -3,6 +3,7 @@ from textual.widgets import DataTable, Input, Static
 from textual.containers import Container, Vertical
 from rich.text import Text
 from sheet_engine.SpreadSheet import Spreadsheet
+from sheet_engine.Expression import Expression
 
 
 class SpreadsheetApp(App):
@@ -76,7 +77,6 @@ class SpreadsheetApp(App):
                 yield Input(placeholder="Enter formula", id="editor")
 
     def on_mount(self) -> None:
-        print("yoooo")
         self.table = self.query_one("#table", DataTable)
         self.input = self.query_one("#editor", Input)
         self.input.display = False
@@ -87,9 +87,10 @@ class SpreadsheetApp(App):
         self._generate_rows(self.table)
 
     def _col_name(self, index: int) -> str:
+        a_ascii = ord("A")
         name = ""
         while index >= 0:
-            name = chr(index % 26 + 65) + name
+            name = chr(index % 26 + a_ascii) + name
             index = index // 26 - 1
         return name
 
@@ -127,8 +128,10 @@ class SpreadsheetApp(App):
 
             name = self._keys_to_cell_name(row_key, col_key)
             formula = self.sheet.get_cell_expr(name)
-
-            self.input.value = formula if formula is not None else ""
+            if isinstance(formula, Expression):
+                self.input.value = formula.expr
+            else:
+                self.input.value = formula if formula is not None else ""
 
     async def on_input_submitted(self, event: Input.Submitted) -> None:
         input_widget = event.input
@@ -153,6 +156,7 @@ class SpreadsheetApp(App):
             self.table.update_cell(row_key, col_key, value, update_width=True)
             self._update_dependents(dep)
 
+    # Todo change dicts to lst
     def _cell_name_to_keys(self, cell_name: str):
         import re
 
@@ -160,13 +164,13 @@ class SpreadsheetApp(App):
         if not match:
             raise ValueError(f"Invalid cell name: {cell_name}")
         col_name, row_num = match.groups()
-        col_key = self.col_name_to_key.get(col_name)
-        row_key = self.row_name_to_key.get(int(row_num))
+        col_key = self.col_name_to_key[col_name]
+        row_key = self.row_name_to_key[int(row_num)]
         return (row_key, col_key)
 
     def _keys_to_cell_name(self, row_key, col_key):
-        col_name = self.col_key_to_name.get(col_key)
-        row_num = self.row_key_to_name.get(row_key)
+        col_name = self.col_key_to_name[col_key]
+        row_num = self.row_key_to_name[row_key]
         return f"{col_name}{row_num}"
 
 

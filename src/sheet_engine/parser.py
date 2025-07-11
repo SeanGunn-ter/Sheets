@@ -130,7 +130,7 @@ def _parse_func_call(tokens, i, func_name):
     while i < len(tokens) and not done:
         token = tokens[i]
 
-        if token.value == ")":
+        if token.type == TokenType.PAREN_CLOSE:
             done = True
             i += 1
         elif expecting_arg:
@@ -140,11 +140,13 @@ def _parse_func_call(tokens, i, func_name):
             i = end
             expecting_arg = False
         else:
-            if token.type == "comma":
+            if token.type == TokenType.COMMA:
                 i += 1
                 expecting_arg = True
             else:
-                raise ValueError(f"Expected ',' or ')' after argument, got '{token}'")
+                raise ValueError(
+                    f"huhExpected ',' or ')' after argument, got '{token}'"
+                )
 
     if not done:
         raise ValueError("Expected ')' to close function call")

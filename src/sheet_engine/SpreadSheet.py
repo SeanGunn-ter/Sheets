@@ -2,11 +2,14 @@ from .Expression import Expression
 
 
 # ToDo
+# catch errors
+# fast name to key func
+# copy paste
 
 
 class Spreadsheet:
     def __init__(self):  # (col,row)
-        self.cells = {}  # stores str expr
+        self.cells = {}  # stores expr obj
         self.values = {}
         # reverse dependency dict- if key changes value, all items in set its holding must change
         self.rev_deps = {}
@@ -21,7 +24,6 @@ class Spreadsheet:
         self.cells[name] = expr_obj
 
     def get_cell_expr(self, name: str) -> str:
-        print("man")
         return self.cells.get(name, "")
 
     def get_cell_value(self, name: str) -> int | float:

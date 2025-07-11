@@ -230,8 +230,8 @@ def test_formula():
     sheet = Spreadsheet()
     sheet.set_cell("B1", "Hello")
     sheet.set_cell("C1", "World")
-    sheet.set_cell("A1", "=Concat(B1,C1,real)")
+    sheet.set_cell("A1", "=Concat(B1,C1,100)")
     assert sheet.get_cell_value("A1") == "HelloWorld100"
 
 
-# python -m pytest tests/test_spreadsheet.py
+# python3 -m pytest tests/test_spreadsheet.py
