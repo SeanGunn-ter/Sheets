@@ -64,4 +64,9 @@ def test_nested_funcs():
     )
 
 
+def test_equal_funcs():
+    expr = Expression("=10=10")
+    assert repr(expr.tree) == ("Equal(LiteralInt(10), LiteralInt(10))")
+
+
 # python -m pytest tests/test_expression.py

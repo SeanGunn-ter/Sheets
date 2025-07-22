@@ -15,6 +15,20 @@ class Formula(ABC):
         pass
 
 
+class Boolean(Formula):
+    def __init__(self, value: bool):
+        self.value = value
+
+    def evaluate(self, get_value):
+        return self.value
+
+    def get_dependencies(self):
+        return set()
+
+    def __repr__(self):
+        return f"Boolean({self.value})"
+
+
 class LiteralInt(Formula):
     def __init__(self, value: int):
         self.value = value
@@ -181,6 +195,21 @@ class Concat(Formula):
                 inner += ", "
             inner += repr(Formula)
         return f"Concat({inner})"
+
+
+class Equal(Formula):
+    def __init__(self, left: Formula, right: Formula):
+        self.left = left
+        self.right = right
+
+    def evaluate(self, get_value):
+        return self.left.evaluate(get_value) == self.right.evaluate(get_value)
+
+    def get_dependencies(self):
+        return self.left.get_dependencies().union(self.right.get_dependencies())
+
+    def __repr__(self):
+        return f"Equal({repr(self.left)}, {repr(self.right)})"
 
 
 class Max(Formula):

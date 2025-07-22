@@ -2,6 +2,7 @@ from .Expression import Expression
 
 
 # ToDo
+# fix the ErrorFormula logic handeling
 # fast name to key func
 # copy paste
 
@@ -16,10 +17,13 @@ class Spreadsheet:
         self.evaluation_count = 0  # for testing
 
     def set_cell(self, name: str, expr: str) -> None:
-        self._clear_dependent_values(name)
-        self._update_deps(name, expr)
-        expr_obj = Expression(expr)
-        self.cells[name] = expr_obj
+        try:
+            self._clear_dependent_values(name)
+            self._update_deps(name, expr)
+            expr_obj = Expression(expr)
+            self.cells[name] = expr_obj
+        except ValueError as e:
+            self.cells[name] = Expression(str(e))
 
     def get_cell_expr(self, name: str) -> str:
         return self.cells.get(name, "")
@@ -63,7 +67,7 @@ class Spreadsheet:
             self.deps[name] = dependencies
 
             if self._has_cycle(name, name, set()):
-                raise ValueError("Circular dependency detected")
+                raise ValueError("#ERROR Circular dependency detected")
 
             for dep in dependencies:
                 # add name to rev_deps list (dict where if key changes value, all items in set its holding must change)
@@ -72,8 +76,9 @@ class Spreadsheet:
                 else:
                     self.rev_deps[dep] = {name}
         except ValueError as e:
-            print(f"[update_deps] Error in cell {name}: {e}")
+            print(f"#ERROR in cell {name}: {e}")
             self.deps[name] = set()
+            raise
 
     def _has_cycle(self, start: str, current: str, visited: set) -> bool:
         if current in visited:
@@ -97,14 +102,10 @@ class Spreadsheet:
 
 
 if __name__ == "__main__":
-    sheet = Spreadsheet((10, 10))
+    sheet = Spreadsheet()
     sheet.set_cell("A1", "10")
-    sheet.set_cell("B1", "=A1+5")
-    sheet.set_cell("C1", "15")
-
-    print(sheet.get_cell_value("B1"))
-    sheet.set_cell("A1", "0")
-    print(sheet.get_cell_value("B1"))
+    sheet.set_cell("B1", "5")
+    sheet.set_cell("C1", "=(3*3)+A1+A1+B1")
 
 
 # python -m src.sheet_engine.SpreadSheet

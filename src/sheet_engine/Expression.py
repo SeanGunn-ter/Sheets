@@ -8,6 +8,7 @@ class ExpressionType(Enum):
     LITERAL = auto()
     INTEGER = auto()
     FORMULA = auto()
+    ERROR = auto()
 
 
 class Expression:
@@ -23,12 +24,16 @@ class Expression:
             return ExpressionType.FORMULA
         if re.fullmatch(r"\d+", self.expr):
             return ExpressionType.INTEGER
+        if self.expr.startswith("#ERROR"):
+            return ExpressionType.ERROR
         return ExpressionType.LITERAL
 
     def evaluate(self, value_dict):
         if self.expr_type == ExpressionType.INTEGER:
             return int(self.expr)
         if self.expr_type == ExpressionType.LITERAL:
+            return self.expr
+        if self.expr_type == ExpressionType.ERROR:
             return self.expr
 
         def get_val(name):

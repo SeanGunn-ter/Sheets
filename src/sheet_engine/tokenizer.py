@@ -44,7 +44,7 @@ def tokenize(expr: str) -> list[Token]:
             i += len(match.group())
 
         # Op
-        elif ch in "+-*/^":
+        elif ch in "+-*/^=":
             tokens.append(Token(TokenType.OP, ch))
             i += 1
 

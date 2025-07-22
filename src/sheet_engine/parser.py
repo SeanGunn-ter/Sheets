@@ -10,6 +10,7 @@ from .formula import (
     Sum,
     Power,
     ErrorFormula,
+    Equal,
     ALL_FUNCTION_NAMES,
 )
 
@@ -34,7 +35,6 @@ def parse_tokens(tokens: list[Token]) -> Formula:
             token = tokens[i]
 
             match (token.type):
-
                 case TokenType.INT:
                     output.append(LiteralInt(int(token.value)))
                     i += 1
@@ -57,12 +57,10 @@ def parse_tokens(tokens: list[Token]) -> Formula:
                     ops.append(token)
                     i += 1
                 case TokenType.PAREN_CLOSE:
-                    while ops and not (
-                        ops[-1].type == "paren" and ops[-1].value == "("
-                    ):
+                    while ops and (ops[-1].type != TokenType.PAREN_OPEN):
                         _reduce_stack(output, ops)
-                    if not ops or not (
-                        ops[-1].type == "paren" and ops[-1].value == "("
+                    if not ops or (
+                        ops[-1].type != TokenType.PAREN_OPEN and ops[-1].value == "("
                     ):
                         raise ValueError("Mismatched parentheses")
                     ops.pop()
@@ -94,7 +92,7 @@ def _reduce_stack(output, ops):
 
 
 def _precedence(op):
-    return {"+": 1, "-": 1, "*": 2, "/": 2, "^": 3}.get(op, 0)
+    return {"=": 0, "+": 1, "-": 1, "*": 2, "/": 2, "^": 3}.get(op, 0)
 
 
 def _to_expr(op, left, right):
@@ -112,7 +110,9 @@ def _to_expr(op, left, right):
         collect(right)
         return Sum(parts)
 
-    return {"-": Minus, "*": Multiply, "/": Divide, "^": Power}[op](left, right)
+    return {"-": Minus, "*": Multiply, "/": Divide, "^": Power, "=": Equal}[op](
+        left, right
+    )
 
 
 # finds index where arg ends

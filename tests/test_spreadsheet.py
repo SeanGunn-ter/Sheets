@@ -1,4 +1,4 @@
-import pytest
+import pytest  # noqa: F401
 from sheet_engine.SpreadSheet import Spreadsheet
 
 
@@ -54,14 +54,14 @@ def test_pemdas():
 def test_circular_reference_detection():
     sheet = Spreadsheet()
     sheet.set_cell("A1", "=B1")
-    with pytest.raises(ValueError, match="Circular dependency detected"):
-        sheet.set_cell("B1", "=A1")
+    sheet.set_cell("B1", "=A1")
+    assert sheet.get_cell_value("B1") == "#ERROR Circular dependency detected"
 
     sheet2 = Spreadsheet()
     sheet2.set_cell("A1", "5")
     sheet2.set_cell("B1", "=A1+5")
-    with pytest.raises(ValueError, match="Circular dependency detected"):
-        sheet2.set_cell("A1", "=B1")
+    sheet2.set_cell("A1", "=B1")
+    assert sheet.get_cell_value("A1") == "#ERROR Circular dependency detected"
 
 
 def test_intensive_dependencies():
@@ -232,6 +232,14 @@ def test_formula():
     sheet.set_cell("C1", "World")
     sheet.set_cell("A1", "=Concat(B1,C1,100)")
     assert sheet.get_cell_value("A1") == "HelloWorld100"
+
+
+def test_equal_formula():
+    sheet = Spreadsheet()
+    sheet.set_cell("B1", "10")
+    sheet.set_cell("C1", "10")
+    sheet.set_cell("A1", "=B1=C1")
+    assert sheet.get_cell_value("A1") == True  # noqa: E712
 
 
 # python3 -m pytest tests/test_spreadsheet.py
