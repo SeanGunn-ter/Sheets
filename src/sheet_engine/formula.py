@@ -252,6 +252,20 @@ class If(Formula):
         return f"If({repr(self.condition)}, {repr(self.then_expr)}, {repr(self.else_expr)})"
 
 
+class ErrorFormula(Formula):
+    def __init__(self, message: str):
+        self.message = message
+
+    def evaluate(self, get_value):
+        return f"#ERROR: {self.message}"
+
+    def get_dependencies(self):
+        return set()
+
+    def __repr__(self):
+        return self.message
+
+
 ALL_FUNCTION_NAMES = [
     ("If", If),
     ("Sum", Sum),

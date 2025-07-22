@@ -117,7 +117,7 @@ class SpreadsheetApp(App):
     async def on_data_table_cell_selected(self, event: DataTable.CellSelected) -> None:
 
         row_key, col_key = event.cell_key
-        col_name = self.col_key_to_name.get(col_key)
+        col_name = self.col_key_to_name[col_key]
         if col_name == "":
             self.input.display = False
             return

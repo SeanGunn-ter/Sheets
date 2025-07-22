@@ -2,7 +2,6 @@ from .Expression import Expression
 
 
 # ToDo
-# catch errors
 # fast name to key func
 # copy paste
 
@@ -18,7 +17,6 @@ class Spreadsheet:
 
     def set_cell(self, name: str, expr: str) -> None:
         self._clear_dependent_values(name)
-
         self._update_deps(name, expr)
         expr_obj = Expression(expr)
         self.cells[name] = expr_obj
@@ -32,11 +30,14 @@ class Spreadsheet:
             return self.values[name]
 
         self.evaluation_count += 1
-        expr = self.cells[name]
+        expr = self.cells.get(name)
+
+        if expr is None:
+            self.values[name] = f"#ERROR: Cell {name} not found"
+            return self.values[name]
+
         value_dict = self._generate_values(expr)
-
         value = expr.evaluate(value_dict)
-
         self.values[name] = value
         return value
 
@@ -48,27 +49,31 @@ class Spreadsheet:
             self._clear_dependent_values(dependent)
 
     def _update_deps(self, name: str, expr: str) -> None:
+        try:
 
-        # remove old rev_deps
-        old_deps = self.deps.get(name, set())
-        for dep in old_deps:
-            if name in self.rev_deps.get(dep, set()):
-                self.rev_deps[dep].remove(name)
+            # remove old rev_deps
+            old_deps = self.deps.get(name, set())
+            for dep in old_deps:
+                if name in self.rev_deps.get(dep, set()):
+                    self.rev_deps[dep].remove(name)
 
-        expr_obj = Expression(expr)
-        dependencies = expr_obj.get_dependencies()
-        # re-write deps
-        self.deps[name] = dependencies
+            expr_obj = Expression(expr)
+            dependencies = expr_obj.get_dependencies()
+            # re-write deps
+            self.deps[name] = dependencies
 
-        if self._has_cycle(name, name, set()):
-            raise ValueError("Circular dependency detected")
+            if self._has_cycle(name, name, set()):
+                raise ValueError("Circular dependency detected")
 
-        for dep in dependencies:
-            # add name to rev_deps list (dict where if key changes value, all items in set its holding must change)
-            if dep in self.rev_deps:
-                self.rev_deps[dep].add(name)
-            else:
-                self.rev_deps[dep] = {name}
+            for dep in dependencies:
+                # add name to rev_deps list (dict where if key changes value, all items in set its holding must change)
+                if dep in self.rev_deps:
+                    self.rev_deps[dep].add(name)
+                else:
+                    self.rev_deps[dep] = {name}
+        except ValueError as e:
+            print(f"[update_deps] Error in cell {name}: {e}")
+            self.deps[name] = set()
 
     def _has_cycle(self, start: str, current: str, visited: set) -> bool:
         if current in visited:
