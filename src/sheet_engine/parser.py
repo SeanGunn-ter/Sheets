@@ -11,6 +11,9 @@ from .formula import (
     Power,
     ErrorFormula,
     Equal,
+    GreaterThen,
+    LessThen,
+    LiteralStr,
     ALL_FUNCTION_NAMES,
 )
 
@@ -37,6 +40,9 @@ def parse_tokens(tokens: list[Token]) -> Formula:
             match (token.type):
                 case TokenType.INT:
                     output.append(LiteralInt(int(token.value)))
+                    i += 1
+                case TokenType.STR:
+                    output.append(LiteralStr(token.value))
                     i += 1
                 case TokenType.CELL:
                     output.append(CellId(token.value))
@@ -67,6 +73,7 @@ def parse_tokens(tokens: list[Token]) -> Formula:
                     i += 1
                 case TokenType.COMMA:
                     i += 1  # handled in _parse_func_call
+
                 case _:
                     raise ValueError(f"Unexpected token: {token}")
 
@@ -92,7 +99,7 @@ def _reduce_stack(output, ops):
 
 
 def _precedence(op):
-    return {"=": 0, "+": 1, "-": 1, "*": 2, "/": 2, "^": 3}.get(op, 0)
+    return {"=": 0, ">": 0, "<": 0, "+": 1, "-": 1, "*": 2, "/": 2, "^": 3}.get(op, 0)
 
 
 def _to_expr(op, left, right):
@@ -110,9 +117,15 @@ def _to_expr(op, left, right):
         collect(right)
         return Sum(parts)
 
-    return {"-": Minus, "*": Multiply, "/": Divide, "^": Power, "=": Equal}[op](
-        left, right
-    )
+    return {
+        "-": Minus,
+        "*": Multiply,
+        "/": Divide,
+        "^": Power,
+        "=": Equal,
+        ">": GreaterThen,
+        "<": LessThen,
+    }[op](left, right)
 
 
 # finds index where arg ends

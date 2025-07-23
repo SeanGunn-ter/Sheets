@@ -10,9 +10,10 @@ class TokenType(Enum):
     PAREN_OPEN = auto()
     PAREN_CLOSE = auto()
     CELL = auto()
+    STR = auto()
 
 
 @dataclass
 class Token:
-    type: TokenType  # int, func, op, str, paren, comma
+    type: TokenType  # int, func, op, str, paren_open, paren_close, comma, str, cell
     value: str

@@ -242,4 +242,22 @@ def test_equal_formula():
     assert sheet.get_cell_value("A1") == True  # noqa: E712
 
 
+def test_greaterthen_formula():
+    sheet = Spreadsheet()
+    sheet.set_cell("B1", "11")
+    sheet.set_cell("C1", "15")
+    sheet.set_cell("A1", "=B1>C1")
+    assert sheet.get_cell_value("A1") == False  # noqa: E712
+
+
+def test_if_formula():
+    sheet = Spreadsheet()
+    sheet.set_cell("B1", "10")
+    sheet.set_cell("C1", "10")
+    sheet.set_cell("A1", "=If(B1=C1,'True','False')")
+    assert sheet.get_cell_value("A1") == "True"
+    sheet.set_cell("C1", "11")
+    assert sheet.get_cell_value("A1") == "False"
+
+
 # python3 -m pytest tests/test_spreadsheet.py

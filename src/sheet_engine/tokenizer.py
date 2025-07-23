@@ -44,7 +44,7 @@ def tokenize(expr: str) -> list[Token]:
             i += len(match.group())
 
         # Op
-        elif ch in "+-*/^=":
+        elif ch in "+-*/^=><":
             tokens.append(Token(TokenType.OP, ch))
             i += 1
 
@@ -60,6 +60,18 @@ def tokenize(expr: str) -> list[Token]:
         # Comma
         elif ch == ",":
             tokens.append(Token(TokenType.COMMA, ch))
+            i += 1
+
+        # String
+        elif ch in ('"', "'"):
+            quote = ch
+            i += 1
+            start = i
+            while i < len(expr) and expr[i] != quote:
+                i += 1
+            if i >= len(expr):
+                raise ValueError("Unterminated string literal")
+            tokens.append(Token(TokenType.STR, expr[start:i]))
             i += 1
 
         else:
